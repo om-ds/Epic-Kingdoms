@@ -9,10 +9,16 @@ public:
     sf::Sprite sprite;
     int x;
     int y;
-    int hp;
-    int maxHp;
+    float hp;
+    float maxHp;
     int currentMovementPoints;
     int maxMovementPoints;
+    int unitCost;
+    float infantryDamageFactor;
+    float cavarlyDamageFactor;
+    float rangedDamageFactor;
+    float cityDamageFactor;
+
     Tile* currentTile;
 
     Unit() = default;

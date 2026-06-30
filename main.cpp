@@ -2,41 +2,53 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include "Tile.cpp"
+#include "collision.hpp"
+#include "Tile.hpp"
+#include "MeleeUnit.hpp"
+#include "RangedUnit.hpp"
+#include "CivilianUnit.hpp"
 
 
 const int SCREEN_WIDTH = 1920;
 const int SCREEN_HEIGHT = 1080;
 const float CAMERA_SPEED = 300.0;
 const float TILE_HEX_SIZE = 50.0;
-const float dx = 88;
-const float dy = 75;
 
 
 int main()
 {
-    //LOADING TEXTURES
+    //LOADING TILE TEXTURES
     sf::Texture texturePlain, textureDesert;
     texturePlain.loadFromFile("./textures/debug/texturePlain.png");
     textureDesert.loadFromFile("./textures/debug/textureDesert.png");
 
+    //LOADING UNIT TEXTURES
+    sf::Texture textureSkeleton;
+    textureSkeleton.loadFromFile("./textures/debug/textureSkeleton.png");
+
+    //CREATING TILE GRID
     int cols, rows;
     std::cin >> cols;
     std::cin >> rows;
 
-    //CREATING TILE GRID
     std::vector<std::vector<Tile>> grid(rows, std::vector<Tile>(cols));
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
         {
-            grid[i][j].setTile(TileType::Desert, &textureDesert, (static_cast<float>(j) + 0.5f * static_cast<float>(i % 2)) * dx, static_cast<float>(i) * dy);
+            grid[i][j].setTile(TileType::Plain, &texturePlain, (static_cast<float>(j) + 0.5f * static_cast<float>(i % 2)) * dx, static_cast<float>(i) * dy, i, j);
         }
     }
 
+    //CREATING TEST UNIT
+    std::vector<Unit> units;
+    MeleeUnit test(MeleeType::lightInfantry, &grid[1][2], &textureSkeleton);
+    units.push_back(test);
+    Unit* selectedUnit = nullptr;
+
     //CREATING WINDOW AND CAMERA
     sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
-    sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Hex Game", sf::Style::Fullscreen);
+    sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Epic Kingdoms", sf::Style::Fullscreen);
     window.setFramerateLimit(60);
     sf::View camera(sf::FloatRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
     sf::Clock clock;
@@ -61,6 +73,19 @@ int main()
                     window.close();
                 }
             }
+
+            if (event.type == sf::Event::MouseButtonPressed and event.mouseButton.button == sf::Mouse::Left)
+            {
+                sf::Vector2f mousePosition = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+                for (int i = 0; i < units.size(); i++)
+                {
+                    if (Collision::SingleSpritePixelTest(units[i].sprite, mousePosition))
+                    {
+                        units.erase(units.begin() + i);
+                    }
+                }
+            }
         }
 
         //CAMERA MOVEMENT
@@ -82,7 +107,7 @@ int main()
         }
         window.setView(camera);
 
-        //DRAWING
+        //DRAWING TILE GRID
         window.clear(sf::Color(0, 128, 128));
 
         for (int i = 0; i < rows; i++)
@@ -91,6 +116,12 @@ int main()
             {
                 grid[i][j].draw(window);
             }
+        }
+
+        //DRAWING TEST UNIT
+        for (int i = 0; i < units.size(); i++)
+        {
+            units[i].draw(window);
         }
 
         window.display();

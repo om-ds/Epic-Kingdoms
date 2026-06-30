@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include "collision.hpp"
 #include "Tile.hpp"
 #include "MeleeUnit.hpp"
@@ -26,6 +27,11 @@ int main()
     sf::Texture textureSkeleton;
     textureSkeleton.loadFromFile("./textures/debug/textureSkeleton.png");
 
+    //POINTERS FOR SELECTED OBJECTS
+    Unit* selectedUnit = nullptr;
+    int selectedUnitIndex = 0;
+    Tile* selectedTile = nullptr;
+
     //CREATING TILE GRID
     int cols, rows;
     std::cin >> cols;
@@ -41,10 +47,8 @@ int main()
     }
 
     //CREATING TEST UNIT
-    std::vector<Unit> units;
-    MeleeUnit test(MeleeType::lightInfantry, &grid[1][2], &textureSkeleton);
-    units.push_back(test);
-    Unit* selectedUnit = nullptr;
+    std::vector<std::unique_ptr<Unit>> units;
+    units.push_back(std::make_unique<MeleeUnit>(MeleeType::lightInfantry, &grid[1][2], &textureSkeleton));
 
     //CREATING WINDOW AND CAMERA
     sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
@@ -74,16 +78,38 @@ int main()
                 }
             }
 
+            if (event.type == sf::Event::MouseButtonPressed and event.mouseButton.button == sf::Mouse::Right)
+            {
+                selectedUnit = nullptr;
+                selectedTile = nullptr;
+            }
+
             if (event.type == sf::Event::MouseButtonPressed and event.mouseButton.button == sf::Mouse::Left)
             {
                 sf::Vector2f mousePosition = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
                 for (int i = 0; i < units.size(); i++)
                 {
-                    if (Collision::SingleSpritePixelTest(units[i].sprite, mousePosition))
+                    if (Collision::SingleSpritePixelTest(units[i]->sprite, mousePosition))
                     {
-                        units.erase(units.begin() + i);
+                        selectedUnit = units[i].get();
                     }
+                }
+
+                for (int i = 0; i < rows; i++)
+                {
+                    for (int j = 0; j < cols; j++)
+                    {
+                        if (Collision::SingleSpritePixelTest(grid[i][j].sprite, mousePosition))
+                        {
+                            selectedTile = &grid[i][j];
+                        }
+                    }
+                }
+
+                if (selectedTile != nullptr and selectedUnit != nullptr)
+                {
+                    selectedUnit->moveUnit(selectedTile);
                 }
             }
         }
@@ -121,7 +147,7 @@ int main()
         //DRAWING TEST UNIT
         for (int i = 0; i < units.size(); i++)
         {
-            units[i].draw(window);
+            units[i]->draw(window);
         }
 
         window.display();

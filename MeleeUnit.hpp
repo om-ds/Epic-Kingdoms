@@ -40,4 +40,11 @@ public:
             currentMovementPoints = 3;
         }
     }
+
+    void moveUnit(Tile* tile) override
+    {
+        x = tile->x;
+        y = tile->y;
+        sprite.setPosition((static_cast<float>(tile->y) + 0.5f * static_cast<float>(tile->x % 2)) * dx, static_cast<float>(tile->x) * dy);
+    }
 };

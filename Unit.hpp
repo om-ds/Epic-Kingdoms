@@ -18,15 +18,14 @@ public:
     float cavarlyDamageFactor;
     float rangedDamageFactor;
     float cityDamageFactor;
-
     Tile* currentTile;
-
-    Unit() = default;
 
     ~Unit() = default;
 
-    void draw(sf::RenderWindow& window)
+    virtual void draw(sf::RenderWindow& window)
     {
         window.draw(sprite);
     }
+
+    virtual void moveUnit(Tile* tile) = 0;
 };

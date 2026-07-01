@@ -19,6 +19,10 @@ const float TILE_HEX_SIZE = 50.0;
 
 int main()
 {
+    //CREATING COLORS
+    sf::Color oceanBlue = sf::Color(0, 128, 128);
+    sf::Color oceanDarkBlue = sf::Color(0, 96, 96);
+
     //LOADING TILE TEXTURES
     sf::Texture texturePlain, textureDesert;
     texturePlain.loadFromFile("./textures/debug/texturePlain.png");
@@ -27,21 +31,24 @@ int main()
     //CREATING BUTTONS
     sf::Font fontNasa21;
     fontNasa21.loadFromFile("./fonts/Nasa21.ttf");
-    Button buttonNextTurn(4 * SCREEN_WIDTH / 5, 0, SCREEN_WIDTH / 5, SCREEN_HEIGHT / 10, "Next turn", fontNasa21, 45, sf::Color(0, 96, 96), sf::Color(96, 96, 96));
+    Button buttonNextTurn(4 * SCREEN_WIDTH / 5, 0, SCREEN_WIDTH / 5, SCREEN_HEIGHT / 10, "Next turn", fontNasa21, 45, oceanDarkBlue, oceanBlue);
 
     //LOADING UNIT TEXTURES
-    sf::Texture textureSkeleton;
+    sf::Texture textureSkeleton, textureSkeletonLight;
     textureSkeleton.loadFromFile("./textures/debug/textureSkeleton.png");
+    textureSkeletonLight.loadFromFile("./textures/debug/skeleton_light.png");
 
     //POINTERS FOR SELECTED OBJECTS
     Unit* selectedUnit = nullptr;
-    int selectedUnitIndex = 0;
+    Unit* attackedUnit = nullptr;
     Tile* selectedTile = nullptr;
 
     //CREATING TILE GRID
     int cols, rows;
-    std::cin >> cols;
-    std::cin >> rows;
+    /*std::cin >> cols;
+    std::cin >> rows;*/
+    cols = 10;
+    rows = 10;
 
     std::vector<std::vector<Tile>> grid(rows, std::vector<Tile>(cols));
     for (int i = 0; i < rows; i++)
@@ -54,7 +61,8 @@ int main()
 
     //CREATING TEST UNIT
     std::vector<std::unique_ptr<Unit>> units;
-    units.push_back(std::make_unique<MeleeUnit>(MeleeType::lightInfantry, Race::undead, &grid[1][2], &textureSkeleton));
+    units.push_back(std::make_unique<MeleeUnit>(MeleeType::heavyInfantry, Race::undead, &grid[1][2], &textureSkeleton));
+    units.push_back(std::make_unique<MeleeUnit>(MeleeType::lightInfantry, Race::human, &grid[1][3], &textureSkeletonLight));
 
     //CREATING WINDOW AND CAMERA
     sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
@@ -92,6 +100,7 @@ int main()
             if (event.type == sf::Event::MouseButtonPressed and event.mouseButton.button == sf::Mouse::Right)
             {
                 selectedUnit = nullptr;
+                attackedUnit = nullptr;
                 selectedTile = nullptr;
             }
 
@@ -100,9 +109,25 @@ int main()
             {
                 for (int i = 0; i < units.size(); i++)
                 {
-                    if (Collision::SingleSpritePixelTest(units[i]->sprite, mousePosition))
+                    if (units[i]->isAlife())
                     {
-                        selectedUnit = units[i].get();
+                        if (Collision::SingleSpritePixelTest(units[i]->sprite, mousePosition) and selectedUnit == nullptr)
+                        {
+                            selectedUnit = units[i].get();
+                        }
+
+                        else if (Collision::SingleSpritePixelTest(units[i]->sprite, mousePosition) and units[i]->race != selectedUnit->race)
+                        {
+                            if (selectedUnit->role == UnitRole::melee)
+                            {
+                                selectedUnit->attackUnit(units[i].get());
+                            }
+                        }
+
+                        else if (Collision::SingleSpritePixelTest(units[i]->sprite, mousePosition) and units[i]->race == selectedUnit->race)
+                        {
+                            selectedUnit = units[i].get();
+                        }
                     }
                 }
 
@@ -143,7 +168,7 @@ int main()
         }
 
         //DRAWING TILE GRID
-        window.clear(sf::Color(0, 128, 128));
+        window.clear(oceanBlue);
 
         for (int i = 0; i < rows; i++)
         {
@@ -156,7 +181,11 @@ int main()
         //DRAWING TEST UNIT
         for (int i = 0; i < units.size(); i++)
         {
-            units[i]->draw(window);
+            if (units[i]->isAlife())
+            {
+                units[i]->draw(window);
+                //units.erase(units.begin() + i);
+            }
         }
 
         //UPDATING UI

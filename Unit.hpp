@@ -3,6 +3,12 @@
 #include "Tile.hpp"
 
 
+enum class Race : unsigned char
+{
+    undead,
+    human
+};
+
 class Unit
 {
 public:
@@ -19,6 +25,7 @@ public:
     float rangedDamageFactor;
     float cityDamageFactor;
     Tile* currentTile;
+    Race race;
 
     ~Unit() = default;
 

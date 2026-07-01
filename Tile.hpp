@@ -1,6 +1,8 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
+class Unit;
+
 inline const float dx = 88;
 inline const float dy = 75;
 
@@ -18,8 +20,7 @@ public:
     int y;
     int movementCost;
     float defenceFactor;
-    bool noCity;
-    bool noUnit;
+    Unit* currentUnit;
     sf::Sprite sprite;
 
     Tile() = default;
@@ -30,6 +31,7 @@ public:
         sprite.setPosition(X, Y);
         x = x_;
         y = y_;
+        currentUnit = nullptr;
 
         if (type == TileType::Plain)
         {

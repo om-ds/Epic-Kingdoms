@@ -54,7 +54,7 @@ int main()
 
     //CREATING TEST UNIT
     std::vector<std::unique_ptr<Unit>> units;
-    units.push_back(std::make_unique<MeleeUnit>(MeleeType::lightInfantry, &grid[1][2], &textureSkeleton));
+    units.push_back(std::make_unique<MeleeUnit>(MeleeType::lightInfantry, Race::undead, &grid[1][2], &textureSkeleton));
 
     //CREATING WINDOW AND CAMERA
     sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();

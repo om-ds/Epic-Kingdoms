@@ -11,27 +11,20 @@ enum class MeleeType : unsigned char
     siegeTower
 };
 
-/*int x;
-int y;
-float hp;
-float maxHp;
-int currentMovementPoints;
-int maxMovementPoints;
-int unitCost;
-float infantryDamageFactor;
-float cavarlyDamageFactor;
-float rangedDamageFactor;
-float cityDamageFactor;*/
 
 class MeleeUnit : public Unit
 {
 public:
-    MeleeUnit(MeleeType type, Tile* tile, sf::Texture* texturePointer)
+    MeleeType type;
+
+    MeleeUnit(MeleeType type_, Race race_, Tile* tile, sf::Texture* texturePointer)
     {
         currentTile = tile;
         sprite.setTexture(*texturePointer);
         x = tile->x;
         y = tile->y;
+        type = type_;
+        race = race_;
         sprite.setPosition((static_cast<float>(tile->y) + 0.5f * static_cast<float>(tile->x % 2)) * dx, static_cast<float>(tile->x) * dy);
 
         if (type == MeleeType::lightInfantry)
@@ -39,6 +32,8 @@ public:
             maxMovementPoints = 3;
             currentMovementPoints = 3;
         }
+
+        tile->currentUnit = this;
     }
 
     void moveUnit(Tile* tile) override
@@ -47,6 +42,7 @@ public:
         {
             x = tile->x;
             y = tile->y;
+            currentTile->currentUnit = nullptr;
             currentTile = tile;
             currentMovementPoints -= tile->movementCost;
             sprite.setPosition((static_cast<float>(tile->y) + 0.5f * static_cast<float>(tile->x % 2)) * dx, static_cast<float>(tile->x) * dy);

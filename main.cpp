@@ -3,7 +3,8 @@
 #include <cmath>
 #include <iostream>
 #include <memory>
-#include "collision.hpp"
+#include "Collision.hpp"
+#include "Button.hpp"
 #include "Tile.hpp"
 #include "MeleeUnit.hpp"
 #include "RangedUnit.hpp"
@@ -22,6 +23,11 @@ int main()
     sf::Texture texturePlain, textureDesert;
     texturePlain.loadFromFile("./textures/debug/texturePlain.png");
     textureDesert.loadFromFile("./textures/debug/textureDesert.png");
+
+    //CREATING BUTTONS
+    sf::Font fontNasa21;
+    fontNasa21.loadFromFile("./fonts/Nasa21.ttf");
+    Button buttonNextTurn(4 * SCREEN_WIDTH / 5, 0, SCREEN_WIDTH / 5, SCREEN_HEIGHT / 10, "Next turn", fontNasa21, 30);
 
     //LOADING UNIT TEXTURES
     sf::Texture textureSkeleton;
@@ -55,6 +61,7 @@ int main()
     sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Epic Kingdoms", sf::Style::Fullscreen);
     window.setFramerateLimit(60);
     sf::View camera(sf::FloatRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+    sf::View ui(sf::FloatRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
     sf::Clock clock;
 
     //MAIN CYCLE
@@ -78,38 +85,51 @@ int main()
                 }
             }
 
+            //RIGHT MOUSE BUTTON CLICK
             if (event.type == sf::Event::MouseButtonPressed and event.mouseButton.button == sf::Mouse::Right)
             {
                 selectedUnit = nullptr;
                 selectedTile = nullptr;
             }
 
+            //LEFT MOUSE BUTTON CLICK
             if (event.type == sf::Event::MouseButtonPressed and event.mouseButton.button == sf::Mouse::Left)
             {
                 sf::Vector2f mousePosition = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-                for (int i = 0; i < units.size(); i++)
+                if (buttonNextTurn.isHovered(mousePosition))
                 {
-                    if (Collision::SingleSpritePixelTest(units[i]->sprite, mousePosition))
+                    for (int i = 0; i < units.size(); i++)
                     {
-                        selectedUnit = units[i].get();
+                        units[i]->currentMovementPoints = units[i]->maxMovementPoints;
                     }
                 }
 
-                for (int i = 0; i < rows; i++)
+                else
                 {
-                    for (int j = 0; j < cols; j++)
+                    for (int i = 0; i < units.size(); i++)
                     {
-                        if (Collision::SingleSpritePixelTest(grid[i][j].sprite, mousePosition))
+                        if (Collision::SingleSpritePixelTest(units[i]->sprite, mousePosition))
                         {
-                            selectedTile = &grid[i][j];
+                            selectedUnit = units[i].get();
                         }
                     }
-                }
 
-                if (selectedTile != nullptr and selectedUnit != nullptr)
-                {
-                    selectedUnit->moveUnit(selectedTile);
+                    for (int i = 0; i < rows; i++)
+                    {
+                        for (int j = 0; j < cols; j++)
+                        {
+                            if (Collision::SingleSpritePixelTest(grid[i][j].sprite, mousePosition))
+                            {
+                                selectedTile = &grid[i][j];
+                            }
+                        }
+                    }
+
+                    if (selectedTile != nullptr and selectedUnit != nullptr and selectedTile != selectedUnit->currentTile)
+                    {
+                        selectedUnit->moveUnit(selectedTile);
+                    }
                 }
             }
         }
@@ -131,6 +151,8 @@ int main()
         {
             camera.move(0, CAMERA_SPEED * dt);
         }
+
+        //DRAWING
         window.setView(camera);
 
         //DRAWING TILE GRID
@@ -149,6 +171,10 @@ int main()
         {
             units[i]->draw(window);
         }
+
+        //DRAWING UI
+        window.setView(ui);
+        buttonNextTurn.draw(window);
 
         window.display();
     }

@@ -27,7 +27,7 @@ int main()
     //CREATING BUTTONS
     sf::Font fontNasa21;
     fontNasa21.loadFromFile("./fonts/Nasa21.ttf");
-    Button buttonNextTurn(4 * SCREEN_WIDTH / 5, 0, SCREEN_WIDTH / 5, SCREEN_HEIGHT / 10, "Next turn", fontNasa21, 30);
+    Button buttonNextTurn(4 * SCREEN_WIDTH / 5, 0, SCREEN_WIDTH / 5, SCREEN_HEIGHT / 10, "Next turn", fontNasa21, 45, sf::Color(0, 96, 96), sf::Color(96, 96, 96));
 
     //LOADING UNIT TEXTURES
     sf::Texture textureSkeleton;
@@ -62,12 +62,15 @@ int main()
     window.setFramerateLimit(60);
     sf::View camera(sf::FloatRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
     sf::View ui(sf::FloatRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT));
+    sf::Vector2f mousePosition;
     sf::Clock clock;
 
     //MAIN CYCLE
     while (window.isOpen())
     {
         float dt = clock.restart().asSeconds();
+        window.setView(camera);
+        mousePosition = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
         sf::Event event;
         while (window.pollEvent(event))
@@ -95,41 +98,28 @@ int main()
             //LEFT MOUSE BUTTON CLICK
             if (event.type == sf::Event::MouseButtonPressed and event.mouseButton.button == sf::Mouse::Left)
             {
-                sf::Vector2f mousePosition = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-
-                if (buttonNextTurn.isHovered(mousePosition))
+                for (int i = 0; i < units.size(); i++)
                 {
-                    for (int i = 0; i < units.size(); i++)
+                    if (Collision::SingleSpritePixelTest(units[i]->sprite, mousePosition))
                     {
-                        units[i]->currentMovementPoints = units[i]->maxMovementPoints;
+                        selectedUnit = units[i].get();
                     }
                 }
 
-                else
+                for (int i = 0; i < rows; i++)
                 {
-                    for (int i = 0; i < units.size(); i++)
+                    for (int j = 0; j < cols; j++)
                     {
-                        if (Collision::SingleSpritePixelTest(units[i]->sprite, mousePosition))
+                        if (Collision::SingleSpritePixelTest(grid[i][j].sprite, mousePosition))
                         {
-                            selectedUnit = units[i].get();
+                            selectedTile = &grid[i][j];
                         }
                     }
+                }
 
-                    for (int i = 0; i < rows; i++)
-                    {
-                        for (int j = 0; j < cols; j++)
-                        {
-                            if (Collision::SingleSpritePixelTest(grid[i][j].sprite, mousePosition))
-                            {
-                                selectedTile = &grid[i][j];
-                            }
-                        }
-                    }
-
-                    if (selectedTile != nullptr and selectedUnit != nullptr and selectedTile != selectedUnit->currentTile)
-                    {
-                        selectedUnit->moveUnit(selectedTile);
-                    }
+                if (selectedTile != nullptr and selectedUnit != nullptr and selectedTile != selectedUnit->currentTile)
+                {
+                    selectedUnit->moveUnit(selectedTile);
                 }
             }
         }
@@ -152,9 +142,6 @@ int main()
             camera.move(0, CAMERA_SPEED * dt);
         }
 
-        //DRAWING
-        window.setView(camera);
-
         //DRAWING TILE GRID
         window.clear(sf::Color(0, 128, 128));
 
@@ -172,9 +159,18 @@ int main()
             units[i]->draw(window);
         }
 
-        //DRAWING UI
+        //UPDATING UI
         window.setView(ui);
-        buttonNextTurn.draw(window);
+        mousePosition = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+        buttonNextTurn.update(window, mousePosition);
+        if (buttonNextTurn.isClicked(event, mousePosition))
+        {
+            for (int i = 0; i < units.size(); i++)
+            {
+                units[i]->currentMovementPoints = units[i]->maxMovementPoints;
+            }
+        }
 
         window.display();
     }
